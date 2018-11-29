@@ -132,14 +132,16 @@ public class DBFunctions implements DBControllers{
     }
     
     private int autoGenId(Connection con) {
-        int newId=0;
+        int newId=1;
         try {
             selectQuery = "select * from student;";
             Statement stt = con.createStatement();
             ResultSet rs = stt.executeQuery(selectQuery);
-            rs.last();
-            lastId = rs.getInt(1);
-            newId = lastId + 1;
+            if(rs.last()){
+                lastId = rs.getInt(1);
+                newId = lastId + 1;
+            }
+            
         }
         catch(SQLException sqex) {
             System.out.println("Unable to generate new id!");
