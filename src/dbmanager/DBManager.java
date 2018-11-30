@@ -2,21 +2,22 @@
 
 package dbmanager;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Scanner;
 
 public class DBManager {
+    
+    
+    /*Change these block only*****************/
+    static String myDriver = "com.mysql.jdbc.Driver";
+    static String myUrl = "jdbc:mysql://localhost:8889/batch4";
+    static String user = "root";
+    static String passw = "root";
+    /*****************************************/
     
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
         DBControllers dbc = new DBFunctions();
         
-        String myDriver = "com.mysql.jdbc.Driver";
-        String myUrl = "jdbc:mysql://localhost:8889/batch4";
-        String user = "root";
-        String passw = "root";
         
         try {
             /*******Load driver********************************************/
@@ -24,7 +25,7 @@ public class DBManager {
             System.out.println("Driver loaded successfully!");
             
             /*******Create DB connection***********************************/
-            Connection con = DriverManager.getConnection(myUrl,user,passw);
+//            con = DriverManager.getConnection(myUrl,user,passw);
             
             System.out.println("Database connected successfully!");
             System.out.println("1. Press 1 to set one value\n"
@@ -35,17 +36,17 @@ public class DBManager {
                               +"6. Press 6 to delete all values\n");
             char opt = scan.next().charAt(0);
             switch(opt){
-                case '1': dbc.setOneValue(con);
+                case '1': dbc.setOneValue();
                         break;
-                case '2': dbc.setMultiValues(con);
+                case '2': dbc.setMultiValues();
                         break;
-                case '3': dbc.getOneValue(con);
+                case '3': dbc.getOneValue();
                         break;
-                case '4': dbc.getAllValues(con);
+                case '4': dbc.getAllValues();
                         break;
-                case '5': dbc.updateValue(con);
+                case '5': dbc.updateValue();
                         break;
-                case '6': dbc.deleteAllValues(con);
+                case '6': dbc.deleteAllValues();
                         break;
                 default: 
                         System.out.println("PICK THE DAMN CHOICE!!");
@@ -54,11 +55,6 @@ public class DBManager {
         catch(ClassNotFoundException cnf) {
             System.out.println("Problem loading driver...");
             System.out.println(cnf.getMessage());
-        }
-        catch(SQLException sqlex) {
-            System.out.println("Problem with sql...");
-            System.out.println(sqlex.getErrorCode());
-            System.out.println(sqlex.getSQLState());
         }
         
     }

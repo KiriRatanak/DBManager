@@ -1,6 +1,7 @@
 package dbmanager;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,52 +13,51 @@ public class DBFunctions implements DBControllers{
     Scanner scan = new Scanner(System.in);
     
     //    String TABLE_NAME = "student";
-    
+    static Connection con = null;
     int id,age,lastId,autoId;
     int parameterIndex;
     String firstName;
     String lastName;
-    String insertQuery = "insert into student values(?,?,?,?)";
     String selectQuery;
+    String insertQuery = "insert into student values(?,?,?,?)";
     String deleteQuery = "delete from student";
     String updateQuery = "update student set age = ? where id = ?;";
     
     @Override
-    public void setOneValue(Connection con){        
+    public void setOneValue(){        
         Student s = inputData();
-        setData(con,insertQuery,s);
+        setData(insertQuery,s);
     }
     
     @Override
-    public void setMultiValues(Connection con){
+    public void setMultiValues(){
         System.out.println("Enter the number of student you want to add: ");
         int num = scan.nextInt();
         while(num>0) {
             Student s = inputData();
-            setData(con,insertQuery,s);
+            setData(insertQuery,s);
             num--;
         }
     }
     
     @Override
-    public void getOneValue(Connection con){
+    public void getOneValue(){
         System.out.println("Enter the id of the student: ");
         int i = scan.nextInt();
         selectQuery = String.format("select * from student where id = %d;",i);
-        getData(con,selectQuery);
+        getData(selectQuery);
         
     }
     @Override
-    public void getAllValues(Connection con){
+    public void getAllValues(){
         selectQuery = "select * from student;";
-        getData(con,selectQuery);
-        
+        getData(selectQuery);    
     }
     
     @Override
-    public void updateValue(Connection con){
+    public void updateValue(){
         try {
-            PreparedStatement preStt = con.prepareStatement(updateQuery);
+            PreparedStatement preStt = getConnection().prepareStatement(updateQuery);
             System.out.println("Enter id of the student to update:");
             int id = scan.nextInt();
             System.out.println("Enter new age:");
@@ -69,15 +69,13 @@ public class DBFunctions implements DBControllers{
         }
         catch(SQLException sqex) {
             System.out.println("Unable to update a value!");
-        }
-        
-        
+        }    
     }
     
     @Override
-    public void deleteAllValues(Connection con){
+    public void deleteAllValues(){
         try {
-            Statement stt = con.createStatement();
+            Statement stt = getConnection().createStatement();
             stt.execute(deleteQuery);
             System.out.println("Deletion complete");
         }
@@ -95,11 +93,11 @@ public class DBFunctions implements DBControllers{
         return s;
     }
     
-    private void setData(Connection con, String insertQuery, Student s) {
+    private void setData(String insertQuery, Student s) {
         try {
-            PreparedStatement preStt = con.prepareStatement(insertQuery);
+            PreparedStatement preStt = getConnection().prepareStatement(insertQuery);
             parameterIndex = 1;
-            preStt.setInt(parameterIndex,autoGenId(con));
+            preStt.setInt(parameterIndex,autoGenId());
             preStt.setInt(++parameterIndex,s.getAge());
             preStt.setString(++parameterIndex,s.getFirstName());
             preStt.setString(++parameterIndex,s.getLastName());
@@ -112,9 +110,9 @@ public class DBFunctions implements DBControllers{
         }
     }
     
-    private void getData(Connection con,String selectQuery){    
+    private void getData(String selectQuery){    
         try {
-            Statement stt = con.createStatement();
+            Statement stt = getConnection().createStatement();
             ResultSet rs = stt.executeQuery(selectQuery);
             while(rs.next()) {
                 parameterIndex = 1;
@@ -131,17 +129,16 @@ public class DBFunctions implements DBControllers{
         }
     }
     
-    private int autoGenId(Connection con) {
+    private int autoGenId() {
         int newId=1;
         try {
             selectQuery = "select * from student;";
-            Statement stt = con.createStatement();
+            Statement stt = getConnection().createStatement();
             ResultSet rs = stt.executeQuery(selectQuery);
             if(rs.last()){
                 lastId = rs.getInt(1);
                 newId = lastId + 1;
             }
-            
         }
         catch(SQLException sqex) {
             System.out.println("Unable to generate new id!");
@@ -151,4 +148,15 @@ public class DBFunctions implements DBControllers{
         return newId;
     }
     
+    private Connection getConnection() {
+        try {
+            con = DriverManager.getConnection(DBManager.myUrl,DBManager.user,DBManager.passw);
+        }
+        catch(SQLException sqlex) {
+            System.out.println("Problem with sql...");
+            System.out.println(sqlex.getErrorCode());
+            System.out.println(sqlex.getSQLState());
+        }
+        return con;
+    }
 }
