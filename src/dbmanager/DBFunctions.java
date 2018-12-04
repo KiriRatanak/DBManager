@@ -12,16 +12,17 @@ import java.util.Scanner;
 public class DBFunctions implements DBControllers{
     Scanner scan = new Scanner(System.in);
     
-    //    String TABLE_NAME = "student";
+    
     static Connection con = null;
     int id,age,lastId,autoId;
     int parameterIndex;
+    String TABLE_NAME = "student";
     String firstName;
     String lastName;
     String selectQuery;
-    String insertQuery = "insert into student values(?,?,?,?)";
-    String deleteQuery = "delete from student";
-    String updateQuery = "update student set age = ? where id = ?;";
+    String insertQuery = String.format("insert into %s values(?,?,?,?)",TABLE_NAME);
+    String deleteQuery = String.format("delete from %s",TABLE_NAME);
+    String updateQuery = String.format("update %s set ",TABLE_NAME);
     
     @Override
     public void setOneValue(){        
@@ -44,28 +45,40 @@ public class DBFunctions implements DBControllers{
     public void getOneValue(){
         System.out.println("Enter the id of the student: ");
         int i = scan.nextInt();
-        selectQuery = String.format("select * from student where id = %d;",i);
+        selectQuery = String.format("select * from %s where id = %d;",TABLE_NAME,i);
         getData(selectQuery);
         
     }
     @Override
     public void getAllValues(){
-        selectQuery = "select * from student;";
+        selectQuery = String.format("select * from %s;",TABLE_NAME);
         getData(selectQuery);    
     }
     
     @Override
     public void updateValue(){
         try {
-            PreparedStatement preStt = getConnection().prepareStatement(updateQuery);
+            
             System.out.println("Enter id of the student to update:");
             int id = scan.nextInt();
-            System.out.println("Enter new age:");
-            int age = scan.nextInt();
-            parameterIndex = 1;
-            preStt.setInt(parameterIndex,age);
-            preStt.setInt(++parameterIndex,id);
-            preStt.execute();
+            
+            //Getting user choice for updation
+            switch(getChoice()){
+                case '1':
+                        updateQuery = updateQuery + "age = ? where id = ?;";
+                        updateAge(id,updateQuery);
+                        break;
+                case '2': 
+                        updateQuery = updateQuery + "first_name = ? where id = ?;";
+                        updateFirstName(id,updateQuery);
+                        break;
+                case '3': 
+                        updateQuery = updateQuery + "last_name = ? where id = ?;";
+                        updateLastName(id,updateQuery);
+                        break;
+                default:
+                    System.out.println("GOD DAMMIT, CARL! PICK THE DAMN NUMBER!");
+            }
         }
         catch(SQLException sqex) {
             System.out.println("Unable to update a value!");
@@ -83,6 +96,9 @@ public class DBFunctions implements DBControllers{
             System.out.println("Unable to delete");
         }
     }
+    
+    
+    // Private functions that are called only in this particular file
     
     private Student inputData() {
         System.out.println("Enter info(age/first-name/last-name): ");
@@ -129,6 +145,44 @@ public class DBFunctions implements DBControllers{
         }
     }
     
+    private char getChoice() {
+        System.out.println("1. Press 1 to update age\n"
+                          +"2. Press 2 to update first name\n"
+                          +"3. Press 3 to update last name\n");
+        char ch = scan.next().charAt(0);
+        return ch;
+    }
+    
+    private void updateAge(int id, String query) throws SQLException {
+        PreparedStatement preStt = getConnection().prepareStatement(query);
+        System.out.println("Enter new age:");
+        int age = scan.nextInt();
+        parameterIndex = 1;
+        preStt.setInt(parameterIndex,age);
+        preStt.setInt(++parameterIndex,id);
+        preStt.execute();
+    }
+    
+    private void updateFirstName(int id, String query) throws SQLException {
+        PreparedStatement preStt = getConnection().prepareStatement(query);
+        System.out.println("Enter new first name :");
+        String fname = scan.next();
+        parameterIndex = 1;
+        preStt.setString(parameterIndex,fname);
+        preStt.setInt(++parameterIndex,id);
+        preStt.execute(); 
+    }
+    
+    private void updateLastName(int id, String query) throws SQLException {
+        PreparedStatement preStt = getConnection().prepareStatement(query);
+        System.out.println("Enter new last name :");
+        String lname = scan.next();
+        parameterIndex = 1;
+        preStt.setString(parameterIndex,lname);
+        preStt.setInt(++parameterIndex,id);
+        preStt.execute(); 
+    }
+    
     private int autoGenId() {
         int newId=1;
         try {
@@ -148,7 +202,7 @@ public class DBFunctions implements DBControllers{
         return newId;
     }
     
-    private Connection getConnection() {
+    private static Connection getConnection() {
         try {
             con = DriverManager.getConnection(DBManager.myUrl,DBManager.user,DBManager.passw);
         }
